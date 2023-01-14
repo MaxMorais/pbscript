@@ -7,13 +7,102 @@ type UnknownPayload any
 var inc = 0
 var events = map[string]map[int]func(payload *UnknownPayload){}
 
-const (
-	EVT_ON_MODEL_BEFORE_CREATE = "OnModelBeforeCreate"
-	EVT_ON_MODEL_AFTER_CREATE  = "OnModelAfterCreate"
-)
+const HOOKS = [69]string{
+	// App Hooks
+	"OnBeforeBootstrap",
+	"OnAfterBootstrap",
+	"OnBeforeServe",
+	"OnBeforeApiError",
+
+	// Db Books
+	"OnModelBeforeCreate",
+	"OnModelAfterCreate",
+	"OnModelBeforeUpdate",
+	"OnModelAfterUpdate",
+	"OnModelBeforeDelete",
+	"OnModelAfterDelete",
+
+	// Mailer Hooks
+	"OnMailerBeforeAdminResetPasswordSend",
+	"OnMailerAfterAdminResetPasswordSend",
+	"OnMailerBeforeRecordResetPasswordSend",
+	"OnMailerAfterRecordResetPasswordSend",
+	"OnMailerBeforeRecordVerificationSend",
+	"OnMailerBeforeRecordChangeEmailSend",
+	"OnMailerAferRecordChangeEmailSend",
+
+	// Record API Hooks
+	"OnRecordsListRequest",
+	"OnRecordViewRequest",
+	"OnRecordBeforeCreateRequest",
+	"OnRecordAfterCreateRequest",
+	"OnRecordBeforeUpdateRequest",
+	"OnRecordBeforeDeleteRequest",
+	"OnRecordAfterDeleteRequest",
+	"OnRecordAuthRequest",
+	"OnRecordListExternalAuthsRequest",
+	"OnRecordBeforeUnlinkExternalAuthRequest",
+	"OnRecordAfterUnlinkExternalAuthRequest",
+	"OnRecorBeforeRequestVerificationRequest",
+	"OnRecordAfterRequestVerificationRequest",
+	"OnRecordBeforeConfirmVerificationRequest",
+	"OnRecordAfterConfirmVerificationRequest",
+	"OnRecordBeforeRequestPasswordResetRequest",
+	"OnRecordAfterRequestPasswordResetRequest",
+	"OnRecordBeforeConfirmPasswordResetRequest",
+	"OnRecordAfterConfirmPasswordResetRequest",
+	"OnRecordBeforeRequestEmailChangeRequest",
+	"OnRecordAfterRquestEmailChangeRequest",
+	"OnRecordBeforeConfirmEmailChangeRequest",
+	"OnRecordAfterConfirmEmailChangeRequest",
+
+	// Realtime API Hooks
+	"OnRealtimeConnectRequest",
+	"OnRealtimeDisconnectRequest",
+	"OnRealtimeBeforeSubscribeRequest",
+	"OnRealtimeAfterSubscribeRequest",
+	"OnRealtimeBeforeMessageSend",
+	"OnRealtimeAfterMessageSend",
+
+	// File API Hooks
+	"OnFileDownloadRequest",
+
+	// Collection API Hooks
+	"OnCollectionListRequest",
+	"OnCollectionViewRequest",
+	"OnCollectionBeforeCreateRequest",
+	"OnCollectionAfterCreateRequest",
+	"OnCollectionBeforeUpdateRequest",
+	"OnCollectionAfterUpdateRequest",
+	"OnCollectionBeforeDeleteRequest",
+	"OnCollectionAfterDeleteRequest",
+	"OnCollectionBeforeImportRequest",
+	"OnCollectionAfterImportRequest",
+
+	// Settings API Hooks
+	"OnSettingsListRequest",
+	"OnSettingsBeforeUpdateRequest",
+	"OnSettingsAfterUpdateRequest",
+
+	// Admin API Hooks
+	"OnAdminsListRequest",
+	"OnAdminViewRequest",
+	"OnAdminBeforeCreateRequest",
+	"OnAdminAfterCreateRequest",
+	"OnAdminBeforeUpdateRequest",
+	"OnAdminAfterUpdateRequest",
+	"OnAdminBeforeDeleteRequest",
+	"OnAdminAfterDeleteRequest",
+	"OnAdminAuthRequest"
+}
 
 func isValid(eventName string) bool {
-	return eventName == EVT_ON_MODEL_BEFORE_CREATE || eventName== EVT_ON_MODEL_AFTER_CREATE
+	for _, element := range HOOKS {
+		if element == eventName {
+			return true
+		}
+	}
+	return false
 }
 
 func ensureEvent(eventName string) {
