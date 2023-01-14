@@ -116,28 +116,6 @@ const (
 );
 
 
-
-
-
-const MIDDLEWARES = [7]{
-	"ActivityLogger",
-	"RequireGuestOnly",
-	"RequireRecordAuth",
-	"RequireSameContextRecordAuth",
-	"RequireAdminAuth",
-	"RequireAdminOrRecordAuth",
-	"RequireOrOwnerAuth"
-};
-
-const ERRORS = [5]{
-	"NewApiError",
-	"NewNotFoundError",
-	"NewBadRequestError",
-	"NewForbiddenError",
-	"NewUnauthorizedError",
-};
-
-
 var app *pocketbase.PocketBase
 var router *echo.Echo
 var vm *goja.Runtime
@@ -708,19 +686,29 @@ func bindApis() {
 
 	// })
 
-
-	// Expose Middlewares
-	for _, hook := range HOOKS {
-		hook_event := Split(hook, ":")
-		__go_apis.Set(hook_event[0], func(cb func(e *core.ModelEvent)))
-	}
-
-
-	__go_apis.Set("requireAdminAuth", apis.RequireAdminAuth)
-	__go_apis.Set("requireAdminAuthOnlyIfAny", apis.RequireAdminAuthOnlyIfAny)
-	__go_apis.Set("requireAdminOrOwnerAuth", apis.RequireAdminOrOwnerAuth)
-	__go_apis.Set("requireAdminOrUserAuth", apis.RequireAdminOrUserAuth)
+	// Expose API Middlewares
+	__go_apis.Set("RequireGuestOnly", apis.RequireGuestOnly)
+	__go_apis.Set("RequireRecordAuth", apis.RequireRecordAuth)
+	__go_apis.Set("RequireSameContextRecordAuth", apis.RequireSameContextRecordAuth)
+	__go_apis.Set("RequireAdminAuth", apis.RequireAdminAuth)
+	__go_apis.Set("RequireAdminAuthOnlyIfAny", apis.RequireAdminAuthOnlyIfAny)
+	__go_apis.Set("RequireAdminOrRecordAuth", apis.RequireAdminOrRecordAuth)
+	__go_apis.Set("RequireAdminOrOwnerAuth", apis.RequireAdminOrOwnerAuth)
+	__go_apis.Set("LoadAuthContext", apis.LoadAuthContext)
+	__go_apis.Set("LoadCollectionContext", apis.LoadCollectionContext)
+	__go_apis.Set("AcitivityLogger", apis.ActivityLogger)
+	
+	// Expose API Errors
+	__go_apis.Set("NewApiError", apis.NewApiError)
+	__go_apis.Set("NewNotFoundError", apis.NewNotFoundError)
+	__go_apis.Set("NewBadRequestError", apis.NewBadRequestError)
+	__go_apis.Set("NewForbiddenError", apis.NewForbiddenError)
+	__go_apis.Set("NewUnauthorizedError", apis.NewUnauthorizedError)	
+	
+	// Expose App
 	__go_apis.Set("app", app)
+	
+	// Expose ping for Q&A Check
 	__go_apis.Set("ping", func() string {
 		return "Hello from Go!"
 	})

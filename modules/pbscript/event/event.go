@@ -7,13 +7,12 @@ type UnknownPayload any
 var inc = 0
 var events = map[string]map[int]func(payload *UnknownPayload){}
 
-const HOOKS = [69]string{
+var HOOKS = [69]string{
 	// App Hooks
 	"OnBeforeBootstrap",
 	"OnAfterBootstrap",
 	"OnBeforeServe",
 	"OnBeforeApiError",
-
 	// Db Books
 	"OnModelBeforeCreate",
 	"OnModelAfterCreate",
@@ -21,7 +20,6 @@ const HOOKS = [69]string{
 	"OnModelAfterUpdate",
 	"OnModelBeforeDelete",
 	"OnModelAfterDelete",
-
 	// Mailer Hooks
 	"OnMailerBeforeAdminResetPasswordSend",
 	"OnMailerAfterAdminResetPasswordSend",
@@ -30,7 +28,6 @@ const HOOKS = [69]string{
 	"OnMailerBeforeRecordVerificationSend",
 	"OnMailerBeforeRecordChangeEmailSend",
 	"OnMailerAferRecordChangeEmailSend",
-
 	// Record API Hooks
 	"OnRecordsListRequest",
 	"OnRecordViewRequest",
@@ -55,7 +52,6 @@ const HOOKS = [69]string{
 	"OnRecordAfterRquestEmailChangeRequest",
 	"OnRecordBeforeConfirmEmailChangeRequest",
 	"OnRecordAfterConfirmEmailChangeRequest",
-
 	// Realtime API Hooks
 	"OnRealtimeConnectRequest",
 	"OnRealtimeDisconnectRequest",
@@ -63,10 +59,8 @@ const HOOKS = [69]string{
 	"OnRealtimeAfterSubscribeRequest",
 	"OnRealtimeBeforeMessageSend",
 	"OnRealtimeAfterMessageSend",
-
 	// File API Hooks
 	"OnFileDownloadRequest",
-
 	// Collection API Hooks
 	"OnCollectionListRequest",
 	"OnCollectionViewRequest",
@@ -78,12 +72,10 @@ const HOOKS = [69]string{
 	"OnCollectionAfterDeleteRequest",
 	"OnCollectionBeforeImportRequest",
 	"OnCollectionAfterImportRequest",
-
 	// Settings API Hooks
 	"OnSettingsListRequest",
 	"OnSettingsBeforeUpdateRequest",
 	"OnSettingsAfterUpdateRequest",
-
 	// Admin API Hooks
 	"OnAdminsListRequest",
 	"OnAdminViewRequest",
@@ -93,7 +85,7 @@ const HOOKS = [69]string{
 	"OnAdminAfterUpdateRequest",
 	"OnAdminBeforeDeleteRequest",
 	"OnAdminAfterDeleteRequest",
-	"OnAdminAuthRequest"
+	"OnAdminAuthRequest",
 }
 
 func isValid(eventName string) bool {
