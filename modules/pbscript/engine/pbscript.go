@@ -2,6 +2,8 @@ package engine
 
 import (
 	"fmt"
+	"strings"
+	"reflect"
 	"net/http"
 	"unsafe"
 
@@ -20,6 +22,122 @@ import (
 	"github.com/pocketbase/pocketbase/models/schema"
 )
 
+
+const (
+	// App Hooks
+	ON_BEFORE_BOOTSTRAP_HOOK = "OnBeforeBootstrap"
+	ON_AFTER_BOOTSTRAP_HOOK = "OnAfterBootstrap"
+	ON_BEFORE_SERVE_HOOK = "OnBeforeServe"
+	ON_API_ERROR_HOOK = "OnBeforeApiError"
+
+	// Db Books
+	ON_MODEL_BEFORE_CREATE_HOOK = "OnModelBeforeCreate"
+	ON_MODEL_AFTER_CREATE_HOOK = "OnModelAfterCreate"
+	ON_MODEL_BEFORE_UPDATE_HOOK = "OnModelBeforeUpdate"
+	ON_MODEL_AFTER_UPDATE_HOOK = "OnModelAfterUpdate"
+	ON_MODEL_BEFORE_DELETE_HOOK = "OnModelBeforeDelete"
+	ON_MODEL_AFTER_DELETE_HOOK = "OnModelAfterDelete"
+
+	// Mailer Hooks
+	ON_MAILER_BEFORE_ADMIN_RESET_PASSWORD_SEND_HOOK = "OnMailerBeforeAdminResetPasswordSend"
+	ON_MAILER_AFTER_ADMIN_RESET_PASSWORD_SEND_HOOK = "OnMailerAfterAdminResetPasswordSend"
+	ON_MAILER_BEFORE_RECORD_RESET_PASSWORD_SEND_HOOK = "OnMailerBeforeRecordResetPasswordSend"
+	ON_MAILER_AFTER_RECORD_RESET_PASSWORD_SEND_HOOK = "OnMailerAfterRecordResetPasswordSend"
+	ON_MAILER_BEFORE_RECORD_VERIFICATION_SEND_HOOK = "OnMailerBeforeRecordVerificationSend"
+	ON_MAILER_AFTER_RECORD_VERIFICATION_SEND_HOOK = "OnMailerAfterRecordVerificationSend"
+	ON_MAILER_BEFORE_RECORD_CHANGE_EMAIL_SEND_HOOK = "OnMailerBeforeRecordChangeEmailSend"
+	ON_MAILER_AFTER_RECORD_CHANGE_EMAIL_SEND_HOOK = "OnMailerAferRecordChangeEmailSend"
+	
+	// Record API Hooks
+	ON_RECORDS_LIST_REQUEST_HOOK = "OnRecordsListRequest"
+	ON_RECORD_VIEW_REQUEST_HOOK = "OnRecordViewRequest"
+	ON_RECORD_BEFORE_CREATE_REQUEST_HOOK = "OnRecordBeforeCreateRequest"
+	ON_RECORD_AFTER_CREATE_REQUEST_HOOK = "OnRecordAfterCreateRequest"
+	ON_RECORD_BEFORE_UPDATE_REQUEST_HOOK = "OnRecordBeforeUpdateRequest"
+	ON_RECORD_AFTER_UPDATE_REQUEST_HOOK = "OnRecordAfterUpdateRequest"
+	ON_RECORD_BEFORE_DELETE_REQUEST_HOOK = "OnRecordBeforeDeleteRequest"
+	ON_RECORD_AFTER_DELETE_REQUEST_HOOK = "OnRecordAfterDeleteRequest"
+	ON_RECORD_AUTH_REQUEST_HOOK = "OnRecordAuthRequest"
+	ON_RECORD_LIST_EXTERNAL_AUTHS_REQUEST_HOOK = "OnRecordListExternalAuthsRequest"
+	ON_RECORD_BEFORE_UNLINK_EXTERNAL_AUTH_REQUEST_HOOK = "OnRecordBeforeUnlinkExternalAuthRequest"
+	ON_RECORD_AFTER_UNLINK_EXTERNAL_AUTH_REQUEST_HOOK = "OnRecordAfterUnlinkExternalAuthRequest"
+	ON_RECORD_BEFORE_REQUEST_VERIFICATION_REQUEST_HOOK = "OnRecorBeforeRequestVerificationRequest"
+	ON_RECORD_AFTER_REQUEST_VERIFICATION_REQUEST_HOOK = "OnRecordAfterRequestVerificationRequest"
+	ON_RECORD_BEFORE_CONFIRM_VERIFICATION_REQUEST_HOOK = "OnRecordBeforeConfirmVerificationRequest"
+	ON_RECORD_AFTER_CONFIRM_VERIFICATION_REQUEST_HOOK = "OnRecordAfterConfirmVerificationRequest"
+	ON_RECORD_BEFORE_REQUEST_PASSWORD_RESET_REQUEST_HOOK = "OnRecordBeforeRequestPasswordResetRequest"
+	ON_RECORD_AFTER_REQUEST_PASSWORD_RESET_REQUEST_HOOK = "OnRecordAfterRequestPasswordResetRequest"
+	ON_RECORD_BEFORE_CONFIRM_PASSWORD_RESET_REQUEST_HOOK = "OnRecordBeforeConfirmPasswordResetRequest"
+	ON_RECORD_AFTER_CONFIRM_PASSWORD_RESET_REQUEST_HOOK = "OnRecordAfterConfirmPasswordResetRequest"
+	ON_RECORD_BEFORE_REQUEST_EMAIL_CHANGE_REQUEST_HOOK = "OnRecordBeforeRequestEmailChangeRequest"
+	ON_RECORD_AFTER_REQUEST_EMAIL_CHANGE_REQUEST_HOOK = "OnRecordAfterRequestEmailChangeRequest"
+	ON_RECORD_BEFORE_CONFIRM_EMAIL_CHANGE_REQUEST_HOOK = "OnRecordBeforeConfirmEmailChangeRequest"
+	ON_RECORD_AFTER_CONFIRM_EMAIL_CHANGE_REQUEST_HOOK = "OnRecordAfterConfirmEmailChangeRequest"
+
+	// Realtime API Hooks
+	ON_REALTIME_CONNECT_REQUEST_HOOK = "OnRealtimeConnectRequest"
+	ON_REALTIME_DISCONNECT_REQUEST_HOOK = "OnRealtimeDisconnectRequest"
+	ON_REALTIME_BEFORE_SUBSCRIBE_REQUEST_HOOK = "OnRealtimeBeforeSubscribeRequest"
+	ON_REALTIME_AFTER_SUBSCRIBE_REQUEST_HOOK = "OnRealtimeAfterSubscribeRequest"
+	ON_REALTIME_BEFORE_MESSAGE_SEND_HOOK = "OnRealtimeBeforeMessageSend"
+	ON_REALTIME_AFTER_MESSAGE_SEND_HOOK = "OnRealtimeAfterMessageSend"
+
+	// File API Hooks
+	ON_FILE_DONWLOAD_REQUEST_HOOK = "OnFileDownloadRequest"
+
+	// Collection API Hooks
+	ON_COLLECTION_LIST_REQUEST_HOOK = "OnCollectionListRequest"
+	ON_COLLECTION_VIEW_REQUEST_HOOK = "OnCollectionViewRequest"
+	ON_COLLECTION_BEFORE_CREATE_REQUEST_HOOK = "OnCollectionBeforeCreateRequest"
+	ON_COLLECTION_AFTER_CREATE_REQUEST_HOOK = "OnCollectionAfterCreateRequest"
+	ON_COLLECTION_BEFORE_UPDATE_REQUEST_HOOK = "OnCollectionBeforeUpdateRequest"
+	ON_COLLECTION_AFTER_UPDATE_REQUEST_HOOK = "OnCollectionAfterUpdateRequest"
+	ON_COLLECTION_BEFORE_DELETE_REQUEST_HOOK = "OnCollectionBeforeDeleteRequest"
+	ON_COLLECTION_AFTER_DELETE_REQUEST_HOOK = "OnCollectionAfterDeleteRequest"
+	ON_COLLECTIONS_BEFORE_IMPORT_REQUEST_HOOK = "OnCollectionBeforeImportRequest"
+	ON_COLLECTIONS_AFTER_IMPORT_REQUEST_HOOK = "OnCollectionAfterImportRequest"
+
+	// Settings API Hooks
+	ON_SETTINGS_LIST_REQUEST_HOOK = "OnSettingsListRequest"
+	ON_SETTINGS_BEFORE_UPDATE_REQUEST_HOOK = "OnSettingsBeforeUpdateRequest"
+	ON_SETTINGS_AFTER_UPDATE_REQUEST_HOOK = "OnSettingsAfterUpdateRequest"
+
+	// Admin API Hooks
+	ON_ADMINS_LIST_REQUEST_HOOK = "OnAdminsListRequest"
+	ON_ADMIN_VIEW_REQUEST_HOOK = "OnAdminViewRequest"
+	ON_ADMIN_BEFORE_CREATE_REQUEST_HOOK = "OnAdminBeforeCreateRequest"
+	ON_ADMIN_AFTER_CREATE_REQUEST_HOOK = "OnAdminAfterCreateRequest"
+	ON_ADMIN_BEFORE_UPDATE_REQUEST_HOOK = "OnAdminBeforeUpdateRequest"
+	ON_ADMIN_AFTER_UPDATE_REQUEST_HOOK = "OnAdminAfterUpdateRequest"
+	ON_ADMIN_BEFORE_DELETE_REQUEST_HOOK = "OnAdminBeforeDeleteRequest"
+	ON_ADMIN_AFTER_DELETE_REQUEST_HOOK = "OnAdminAfterDeleteRequest"
+	ON_ADMIN_AUTH_REQUEST_HOOK = "OnAdminAuthRequest"
+
+);
+
+
+
+
+
+const MIDDLEWARES = [7]{
+	"ActivityLogger",
+	"RequireGuestOnly",
+	"RequireRecordAuth",
+	"RequireSameContextRecordAuth",
+	"RequireAdminAuth",
+	"RequireAdminOrRecordAuth",
+	"RequireOrOwnerAuth"
+};
+
+const ERRORS = [5]{
+	"NewApiError",
+	"NewNotFoundError",
+	"NewBadRequestError",
+	"NewForbiddenError",
+	"NewUnauthorizedError",
+};
+
+
 var app *pocketbase.PocketBase
 var router *echo.Echo
 var vm *goja.Runtime
@@ -37,13 +155,435 @@ const (
 	colorWhite  = "\033[37m"
 )
 
-func logErrorf(format string, args ...any) (n int, err error) {
-
+func logF(color, format string, args ...any) (n int, err error) {
 	s := append(args, string(colorReset))
-	fmt.Print(colorRed)
+	fmt.Print(color)
 	res, err := fmt.Printf(format, s...)
 	fmt.Print(colorReset)
 	return res, err
+}
+
+func logErrorf(format string, args ...any) (n int, err error) {
+	return logF(colorRed, format, args...)
+}
+
+func cleanup(msg string, cb func()) {
+	fmt.Printf("adding cleanup: %s\n", msg)
+	cleanups = append(cleanups, func() {
+		fmt.Printf("executing cleanup: %s\n", msg)
+		cb()
+	})
+}
+
+func bootstrapEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.BootstrapEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.BootstrapEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func serverEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.ServerEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.ServerEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func apiErrorEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.ApiErrorEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.ApiErrorEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func modelEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.ModelEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.ModelEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func modelEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.ModelEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.ModelEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func mailerRecordEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.MailerRecordEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.MailerRecordEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func mailerAdminEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.MailerAdminEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.MailerAdminEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func realtimeConnectEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RealtimeConnectEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RealtimeConnectEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func realtimeDisconnectEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RealtimeDisconnectEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RealtimeDisconnectEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func realtimeSubscribeEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RealtimeSubscribeEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RealtimeSubscribeEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func realtimeMessageEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RealtimeMessageEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RealtimeMessageEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func settingsListEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.SettingsListEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.SettingsListEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func settingsUpdateEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.SettingsUpdateEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.SettingsUpdateEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordsListEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordsListEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordsListEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+
+func recordViewEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordViewEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordViewEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordCreateEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordCreateEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordCreateEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordUpdateEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordUpdateEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordUpdateEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordDeleteEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordDeleteEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordDeleteEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordAuthEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordAuthEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordAuthEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordUnlinkExternalAuthEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordUnlinkExternalAuthEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordUnlinkExternalAuthEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordRequestPasswordResetEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordRequestPasswordResetEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordRequestPasswordResetEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordConfirmPasswordResetEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordDeleteEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordConfirmPasswordResetEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordConfirmPasswordResetEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordConfirmPasswordResetEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordConfirmPasswordResetEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordRequestVerificationEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordRequestVerificationDeleteEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordRequestVerificationDeleteEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordConfirmVerificationEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordConfirmVerificationEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordConfirmVerificationEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordRequestEmailChangeEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordRequestEmailChangeEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordRequestEmailChangeEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordConfirmEmailChangeEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordConfirmEmailChangeEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordConfirmEmailChangeEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func recordListExternalAuthsEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.RecordListExternalAuthsEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.RecordListExternalAuthsEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func adminsListEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.AdminsListEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.AdminisListEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func adminViewEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.AdminViewEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.AdminViewEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func adminCreateEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.AdminCreateEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.AdminCreateEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func adminUpdateEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.AdminUpdateEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.AdminUpdateEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func adminDeleteEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.AdminDeleteEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.AdminDeleteEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func adminAuthEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.AdminAuthEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.AdminAuthEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func collectionsListEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.CollectionsListEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.CollectionsListEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func collectionViewEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.CollectionViewEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.CollectionViewEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func collectionCreateEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.CollectionCreateEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.CollectionCreateEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func collectionUpdateEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.CollectionUpdateEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.CollectionUpdateEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func collectionDeleteEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.CollectionDeleteEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.CollectionDeleteEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func collectionsImportEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.CollectionsImportEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.CollectiosImportEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
+}
+
+func fileDownloadEventCallbackConstructor(event string) {
+	__go_apis.Set(event, func(cb func(e *core.FileDownloadEvent)){
+		fmt.Println("Listening in GO for %s\n", event)
+		unsub := event.On(event, func(e *event.UnknownPayload){
+			core((*core.FileDownloadEvent)(unsafe.Pointer(e)))
+		})
+		cleanup(event, unsub);
+	})
 }
 
 func bindApis() {
@@ -58,28 +598,98 @@ func bindApis() {
 			fmt.Sprintf("route %s %s", method, path),
 			func() {
 				router.Router().Remove(method, path)
-			})
+			}
+		)
 	})
-	__go_apis.Set("onModelBeforeCreate", func(cb func(e *core.ModelEvent)) {
-		fmt.Println("Listening in Go for onModelBeforeCreate")
-		unsub := event.On(event.EVT_ON_MODEL_BEFORE_CREATE, func(e *event.UnknownPayload) {
-			// fmt.Println("syntheticevent: OnModelBeforeCreate")
-			// fmt.Println("e", e)
-			// fmt.Println("cb", cb)
-			cb((*core.ModelEvent)(unsafe.Pointer(e)))
-		})
-		cleanup("onModelBeforeCreate", unsub)
-	})
-	__go_apis.Set("onModelAfterCreate", func(cb func(e *core.ModelEvent)) {
-		fmt.Println("Listening in Go for onModelAfterCreate")
-		unsub := event.On(event.EVT_ON_MODEL_AFTER_CREATE, func(e *event.UnknownPayload) {
-			// fmt.Println("syntheticevent: OnModelAfterCreate")
-			// fmt.Println("e", e)
-			// fmt.Println("cb", cb)
-			cb((*core.ModelEvent)(unsafe.Pointer(e)))
-		})
-		cleanup("onModelAfterCreate", unsub)
-	})
+
+	// App Hooks
+	bootstrapEventCallbackConstructor(ON_BEFORE_BOOTSTRAP_HOOK)
+	bootstrapEventCallbackConstructor(ON_AFTER_BOOTSTRAP_HOOK)
+	serverEventCallbackConstructor(ON_BEFORE_SERVE_HOOK)
+	apiErrorEventCallbackConstructor(ON_API_ERROR_HOOK)
+
+	// Db Hooks
+	modelEventCallbackConstructor(ON_MODEL_BEFORE_CREATE_HOOK)
+	modelEventCallbackConstructor(ON_MODEL_AFTER_CREATE_HOOK)
+	modelEventCallbackConstructor(ON_MODEL_BEFORE_UPDATE_HOOK)
+	modelEventCallbackConstructor(ON_MODEL_AFTER_UPDATE_HOOK)
+	modelEventCallbackConstructor(ON_MODEL_BEFORE_DELETE_HOOK)
+	modelEventCallbackConstructor(ON_MODEL_AFTER_DELETE_HOOK)
+
+	// Mailer Hooks
+	mailerAdminEventCallbackConstructor(ON_MAILER_BEFORE_ADMIN_RESET_PASSWORD_SEND_HOOK)
+	mailerAdminEventCallbackConstructor(ON_MAILER_AFTER_ADMIN_RESET_PASSWORD_SEND_HOOK)
+	mailerRecordEventCallbackConstructor(ON_MAILER_BEFORE_RECORD_RESET_PASSWORD_SEND_HOOK)
+	mailerRecordEventCallbackConstructor(ON_MAILER_AFTER_RECORD_RESET_PASSWORD_SEND_HOOK)
+	mailerRecordEventCallbackConstructor(ON_MAILER_BEFORE_RECORD_VERIFICATION_SEND_HOOK)
+	mailerRecordEventCallbackConstructor(ON_MAILER_AFTER_RECORD_VERIFICATION_SEND_HOOK)
+	mailerRecordEventCallbackConstructor(ON_MAILER_BEFORE_RECORD_CHANGE_EMAIL_SEND_HOOK)
+	mailerRecordEventCallbackConstructor(ON_MAILER_AFTER_RECORD_CHANGE_EMAIL_SEND_HOOK)
+
+	// Record API Hooks
+	recordsListEventCallbackConstructor(ON_RECORDS_LIST_REQUEST_HOOK)
+	recordViewEventCallbackConstructor(ON_RECORD_VIEW_REQUEST_HOOK)
+	recordCreateEventCallbackConstructor(ON_RECORD_BEFORE_CREATE_REQUEST_HOOK)
+	recordCreateEventCallbackConstructor(ON_RECORD_AFTER_CREATE_REQUEST_HOOK)
+	recordUpdateEventCallbackConstructor(ON_RECORD_BEFORE_UPDATE_REQUEST_HOOK)
+	recordUpdateEventCallbackConstructor(ON_RECORD_AFTER_UPDATE_REQUEST_HOOK)
+	recordDeleteEventCallbackConstructor(ON_RECORD_BEFORE_DELETE_REQUEST_HOOK)
+	recordDeleteEventCallbackConstructor(ON_RECORD_AFTER_DELETE_REQUEST_HOOK)
+	recordAuthEventCallbackConstructor(ON_RECORD_AUTH_REQUEST_HOOK)
+	recordUnlinkExternalAuthEventCallbackConstructor(ON_RECORD_BEFORE_UNLINK_EXTERNAL_AUTH_REQUEST_HOOK)
+	recordUnlinkExternalAuthEventCallbackConstructor(ON_RECORD_AFTER_UNLINK_EXTERNAL_AUTH_REQUEST_HOOK)
+	recordRequestVerificationEventCallbackConstructor(ON_RECORD_BEFORE_REQUEST_VERIFICATION_REQUEST_HOOK)
+	recordRequestVerificationEventCallbackConstructor(ON_RECORD_AFTER_REQUEST_VERIFICATION_REQUEST_HOOK)
+	recordConfirmVerificationEventCallbackConstructor(ON_RECORD_BEFORE_CONFIRM_VERIFICATION_REQUEST_HOOK)
+	recordConfirmVerificationEventCallbackConstructor(ON_RECORD_AFTER_CONFIRM_VERIFICATION_REQUEST_HOOK)
+	recordRequestPasswordResetEventCallbackConstructor(ON_RECORD_BEFORE_REQUEST_PASSWORD_RESET_REQUEST_HOOK)
+	recordRequestPasswordResetEventCallbackConstructor(ON_RECORD_AFTER_REQUEST_PASSWORD_RESET_REQUEST_HOOK)
+	recordConfirmPasswordResetEventCallbackConstructor(ON_RECORD_BEFORE_CONFIRM_PASSWORD_RESET_REQUEST_HOOK)
+	recordConfirmPasswordResetEventCallbackConstructor(ON_RECORD_AFTER_CONFIRM_PASSWORD_RESET_REQUEST_HOOK)
+	recordRequestEmailChangeEventCallbackConstructor(ON_RECORD_BEFORE_REQUEST_EMAIL_CHANGE_REQUEST_HOOK)
+	recordRequestEmailChangeEventCallbackConstructor(ON_RECORD_AFTER_REQUEST_EMAIL_CHANGE_REQUEST_HOOK)
+	recordConfirmEmailChangeEventCallbackConstructor(ON_RECORD_BEFORE_CONFIRM_EMAIL_CHANGE_REQUEST_HOOK)
+	recordConfirmEmailChangeEventCallbackConstructor(ON_RECORD_AFTER_CONFIRM_EMAIL_CHANGE_REQUEST_HOOK)
+
+	// Realtime API Hooks
+	realtimeConnectEventCallbackConstructor(ON_REALTIME_CONNECT_REQUEST_HOOK)
+	realtimeDisconnectEventCallbackConstructor(ON_REALTIME_DISCONNECT_REQUEST_HOOK)
+	realtimeSubscribeEventCallbackConstructor(ON_REALTIME_BEFORE_SUBSCRIBE_REQUEST_HOOK)
+	realtimeSubscribeEventCallbackConstructor(ON_REALTIME_AFTER_SUBSCRIBE_REQUEST_HOOK)
+	realtimeMessageEventCallbackConstructor(ON_REALTIME_BEFORE_MESSAGE_SEND_HOOK)
+	realtimeMessageEventCallbackConstructor(ON_REALTIME_AFTER_MESSAGE_SEND_HOOK)
+
+	// File API Hooks
+	fileDownloadEventCallbackConstructor(ON_FILE_DONWLOAD_REQUEST_HOOK)
+
+	// Collection API Hooks
+	collectionsListEventCallbackConstructor(ON_COLLECTION_LIST_REQUEST_HOOK)
+	collectionViewEventCallbackConstructor(ON_COLLECTION_VIEW_REQUEST_HOOK)
+	collectionCreateEventCallbackConstructor(ON_COLLECTION_BEFORE_CREATE_REQUEST_HOOK)
+	collectionCreateEventCallbackConstructor(ON_COLLECTION_AFTER_CREATE_REQUEST_HOOK)
+	collectionUpdateEventCallbackConstructor(ON_COLLECTION_BEFORE_UPDATE_REQUEST_HOOK)
+	collectionUpdateEventCallbackConstructor(ON_COLLECTION_AFTER_UPDATE_REQUEST_HOOK)
+	collectionDeleteEventCallbackConstructor(ON_COLLECTION_BEFORE_DELETE_REQUEST_HOOK)
+	collectionDeleteEventCallbackConstructor(ON_COLLECTION_AFTER_DELETE_REQUEST_HOOK)
+	collectionsImportEventCallbackConstructor(ON_COLLECTIONS_BEFORE_IMPORT REQUEST_HOOK)
+	collectionsImportEventCallbackConstructor(ON_COLLECTIONS_AFTER_IMPORT_REQUEST_HOOK)
+
+	// Settings API Hooks
+	settingsListEventCallbackConstructor(ON_SETTINGS_LIST_REQUEST_HOOK)
+	settingsUpdateEventCallbackConstructor(ON_SETTINGS_BEFORE_UPDATE_REQUEST_HOOK)
+	settingsUpdateEventCallbackConstructor(ON_SETTINGS_AFTER_UPDATE_REQUEST_HOOK)
+
+	// Admin API Hooks
+	adminsListEventCallbackConstructor(ON_ADMINS_LIST_REQUEST_HOOK)
+	adminViewEventCallbackConstructor(ON_ADMIN_VIEW_REQUEST_HOOK)
+	adminCreateEventCallbackConstructor(ON_ADMIN_BEFORE_CREATE_REQUEST_HOOK)
+	adminCreateEventCallbackConstructor(ON_ADMIN_AFTER_CREATE_REQUEST_HOOK)
+	adminUpdateEventCallbackConstructor(ON_ADMIN_BEFORE_UPDATE_REQUEST_HOOK)
+	adminUpdateEventCallbackConstructor(ON_ADMIN_AFTER_UPDATE_REQUEST_HOOK)
+	adminDeleteEventCallbackConstructor(ON_ADMIN_BEFORE_DELETE_REQUEST_HOOK)
+	adminDeleteEventCallbackConstructor(ON_ADMIN_AFTER_DELETE_REQUEST_HOOK)
+	adminAuthEventCallbackConstructor(ON_ADMIN_AUTH_REQUEST_HOOK)
+	
 
 	// type TransactionApi struct {
 	// 	Execute func(sql string)
@@ -98,6 +708,14 @@ func bindApis() {
 
 	// })
 
+
+	// Expose Middlewares
+	for _, hook := range HOOKS {
+		hook_event := Split(hook, ":")
+		__go_apis.Set(hook_event[0], func(cb func(e *core.ModelEvent)))
+	}
+
+
 	__go_apis.Set("requireAdminAuth", apis.RequireAdminAuth)
 	__go_apis.Set("requireAdminAuthOnlyIfAny", apis.RequireAdminAuthOnlyIfAny)
 	__go_apis.Set("requireAdminOrOwnerAuth", apis.RequireAdminOrOwnerAuth)
@@ -105,14 +723,6 @@ func bindApis() {
 	__go_apis.Set("app", app)
 	__go_apis.Set("ping", func() string {
 		return "Hello from Go!"
-	})
-}
-
-func cleanup(msg string, cb func()) {
-	fmt.Printf("adding cleanup: %s\n", msg)
-	cleanups = append(cleanups, func() {
-		fmt.Printf("executing cleanup: %s\n", msg)
-		cb()
 	})
 }
 
@@ -334,7 +944,8 @@ func watchForScriptChanges() {
 	})
 }
 
-func initAppEvents() {
+func initEvents() {
+
 	app.OnModelBeforeCreate().Add(func(e *core.ModelEvent) error {
 		fmt.Println("event: OnModelBeforeCreate")
 		event.Fire(event.EVT_ON_MODEL_BEFORE_CREATE, (*event.UnknownPayload)(unsafe.Pointer(e)))
@@ -354,7 +965,7 @@ func StartPBScript(_app *pocketbase.PocketBase) error {
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		migrate()
-		initAppEvents()
+		initEvents()
 		router = e.Router
 		err := reloadVm()
 		if err != nil {
